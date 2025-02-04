@@ -1,10 +1,3 @@
-/****************************************************/
-/* File: main.c                                     */
-/* Main program for TINY compiler                   */
-/* Compiler Construction: Principles and Practice   */
-/* Kenneth C. Louden                                */
-/****************************************************/
-
 #include "globals.h"
 
 /* set NO_PARSE to TRUE to get a scanner-only compiler */
@@ -35,6 +28,7 @@ int lineno = 0;
 FILE * source;
 FILE * listing;
 FILE * code;
+FILE * redundant_source;
 
 /* allocate and set tracing flags */
 int EchoSource = TRUE;
@@ -47,7 +41,7 @@ int Error = FALSE;
 
 int main( int argc, char * argv[] )
 { TreeNode * syntaxTree;
-  
+
     //// opening sources ////
     char pgm[120]; /* source code file name */
     if ((argc < 2) || (argc > 3))
@@ -58,22 +52,22 @@ int main( int argc, char * argv[] )
     if (strchr (pgm, '.') == NULL)
         strcat(pgm,".cm");// if no extension is given, append .cm (c minus) to the filename
     source = fopen(pgm,"r");
-    //redundant_source = fopen(pgm, "r"); <- use redundant_source to print whole lines in lex output
+    redundant_source = fopen(pgm, "r");// <- use redundant_source to print whole lines in lex output
     if (source==NULL)
     { fprintf(stderr,"File %s not found\n",pgm);
         exit(1);
     }
-    
+
     char detailpath[200];
     if (3 == argc) {
         strcpy(detailpath,argv[2]);
     } else strcpy(detailpath,"/tmp/");// default detailpath is /tmp. Check there if you called by hand.
     //// end opening sources ////
-    
+
     listing = stdout; /* send messages from main() to screen */
     initializePrinter(detailpath, pgm, LER);// init logger in /lib/log.c
     // for the lexical analysis, you might change LOGALL to LER, to generate only lex and err outputs.
-      
+
   fprintf(listing,"\nTINY COMPILATION: %s\n",pgm);
 #if NO_PARSE
   while (getToken()!=ENDFILE);
@@ -110,6 +104,6 @@ int main( int argc, char * argv[] )
 #endif
 #endif
   fclose(source);
+  fclose(redundant_source);
   return 0;
 }
-

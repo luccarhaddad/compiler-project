@@ -50,3 +50,10 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Additional files
+.idea
+cmake-build-debug
+build
+alunodetail
+alunoout
