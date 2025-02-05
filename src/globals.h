@@ -18,40 +18,42 @@
 /* MAXRESERVED = the number of reserved words */
 #define MAXRESERVED 6
 
-typedef enum
-/* book-keeping tokens */
-{ ENDFILE,
-  ERROR,
-  /* reserved words */
-  IF,
-  ELSE,
-  INT,
-  RETURN,
-  VOID,
-  WHILE,
-  /* multicharacter tokens */
-  ID,
-  NUM,
-  /* special symbols */
-  ASSIGN,
-  EQ,
-  NEQ,
-  LT,
-  LE,
-  GT,
-  GE,
-  PLUS,
-  MINUS,
-  TIMES,
-  OVER,
-  LPAREN,
-  RPAREN,
-  LBRACKET,
-  RBRACKET,
-  LBRACE,
-  RBRACE,
-  SEMI,
-  COMMA } TokenType;
+// typedef enum
+// /* book-keeping tokens */
+// { ENDFILE,
+//   ERROR,
+//   /* reserved words */
+//   IF,
+//   ELSE,
+//   INT,
+//   RETURN,
+//   VOID,
+//   WHILE,
+//   /* multicharacter tokens */
+//   ID,
+//   NUM,
+//   /* special symbols */
+//   ASSIGN,
+//   EQ,
+//   NEQ,
+//   LT,
+//   LE,
+//   GT,
+//   GE,
+//   PLUS,
+//   MINUS,
+//   TIMES,
+//   OVER,
+//   LPAREN,
+//   RPAREN,
+//   LBRACKET,
+//   RBRACKET,
+//   LBRACE,
+//   RBRACE,
+//   SEMI,
+//   COMMA } TokenType;
+
+typedef int TokenType;
 
 extern FILE* source;           /* source code text file */
 extern FILE* redundant_source; /* source code text file */
@@ -65,11 +67,11 @@ extern int lineno; /* source line number for listing */
 /**************************************************/
 
 typedef enum { StmtK, ExpK } NodeKind;
-typedef enum { IfK, WhileK, ReturnK, AssignK } StmtKind;
-typedef enum { OpK, ConstK, IdK } ExpKind;
+typedef enum { IfK, WhileK, ReturnK, AssignK, ParamK, VarK, FuncK } StmtKind;
+typedef enum { OpK, ConstK, IdK, CallK } ExpKind;
 
 /* ExpType is used for type checking */
-typedef enum { Void, Integer } ExpType;
+typedef enum { Void, Integer, Boolean } ExpType;
 
 #define MAXCHILDREN 3
 
@@ -88,6 +90,7 @@ typedef struct treeNode {
 		char*     name;
 	} attr;
 	ExpType type; /* for type checking of exps */
+	int isArray;
 } TreeNode;
 
 /**************************************************/
@@ -124,4 +127,10 @@ extern int TraceCode;
 
 /* Error = TRUE prevents further passes if an error occurs */
 extern int Error;
+
+#ifndef YYPARSER
+#include "parser.h"
+#define ENDFILE 0
+#endif
+
 #endif

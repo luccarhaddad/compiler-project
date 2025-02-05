@@ -7,7 +7,8 @@ cmake_print_variables(CMAKE_VERSION)
 
 set(DOPARSE FALSE)
 
-#SET(DOPARSE TRUE CACHE BOOL "if false, bison is not used, and only lexical analysis is performed")
+SET(DOPARSE TRUE CACHE BOOL "if false, bison is not used, and only lexical analysis is performed")
+SET(BISON_EXECUTABLE "/opt/homebrew/opt/bison/bin/bison")
 
 if(DOPARSE)
     find_package(BISON REQUIRED)

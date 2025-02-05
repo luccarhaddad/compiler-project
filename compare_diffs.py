@@ -1,6 +1,6 @@
 import os
 for file in  os.listdir("alunodetail"):
-    if file.endswith("lex.diff"):
+    if file.endswith("syn.diff"):
         print(f"\033[93m{file}\033[0m")
         with open(os.path.join("alunodetail", file), 'r') as f:
             lines = f.readlines()
