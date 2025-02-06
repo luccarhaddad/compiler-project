@@ -1,23 +1,25 @@
 #ifndef _SYMTAB_H_
 #define _SYMTAB_H_
 
-#include "log.h"
+#define SIZE 211
+#define SHIFT 4
 
-/* Procedure st_insert inserts line numbers and
- * memory locations into the symbol table
- * loc = memory location is inserted only the
- * first time, otherwise ignored
- */
-void st_insert(char* name, int lineno, int loc);
+typedef struct LineListRec {
+   int                 lineno;
+   struct LineListRec* next;
+}* LineList;
 
-/* Function st_lookup returns the memory
- * location of a variable or -1 if not found
- */
-int st_lookup(char* name);
+typedef struct BucketListRec {
+   char*                 name;
+   LineList              lines;
+   int                   memloc;
+   struct BucketListRec* next;
+}* BucketList;
 
-/* Procedure printSymTab prints a formatted
- * list of the symbol table contents
- */
-void printSymTab();
+static BucketList hashTable[SIZE];
+
+void symbolTableInsert(char* name, int lineno, int loc);
+int symbolTableLookup(const char* name);
+void printSymbolTable();
 
 #endif

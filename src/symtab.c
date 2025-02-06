@@ -1,17 +1,17 @@
 #include "symtab.h"
+
+#include <log.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* SIZE is the size of the hash table */
-#define SIZE 211
-
-/* SHIFT is the power of two used as multiplier
-   in hash function  */
-#define SHIFT 4
-
-/* the hash function */
-static int hash(char* key) {
+/**
+ * @brief Computes the hash value for a given key.
+ *
+ * @param key The key to hash.
+ * @return The hash value.
+ */
+static int hash(const char* key) {
 	int temp = 0;
 	int i    = 0;
 	while (key[i] != '\0') {
@@ -21,41 +21,20 @@ static int hash(char* key) {
 	return temp;
 }
 
-/* the list of line numbers of the source
- * code in which a variable is referenced
+/**
+ * @brief Inserts a symbol into the symbol table.
+ *
+ * @param name The name of the symbol.
+ * @param lineno The line number where the symbol is found.
+ * @param loc The memory location of the symbol.
  */
-typedef struct LineListRec {
-	int                 lineno;
-	struct LineListRec* next;
-}* LineList;
-
-/* The record in the bucket lists for
- * each variable, including name,
- * assigned memory location, and
- * the list of line numbers in which
- * it appears in the source code
- */
-typedef struct BucketListRec {
-	char*                 name;
-	LineList              lines;
-	int                   memloc; /* memory location for variable */
-	struct BucketListRec* next;
-}* BucketList;
-
-/* the hash table */
-static BucketList hashTable[SIZE];
-
-/* Procedure st_insert inserts line numbers and
- * memory locations into the symbol table
- * loc = memory location is inserted only the
- * first time, otherwise ignored
- */
-void st_insert(char* name, int lineno, int loc) {
-	int        h = hash(name);
+void symbolTableInsert(char* name, const int lineno, const int loc) {
+	const int  h = hash(name);
 	BucketList l = hashTable[h];
-	while ((l != NULL) && (strcmp(name, l->name) != 0)) l = l->next;
-	if (l == NULL) /* variable not yet in table */
-	{
+	while (l != NULL && strcmp(name, l->name) != 0)
+		l = l->next;
+
+	if (l == NULL) {
 		l                = (BucketList) malloc(sizeof(struct BucketListRec));
 		l->name          = name;
 		l->lines         = (LineList) malloc(sizeof(struct LineListRec));
@@ -64,37 +43,38 @@ void st_insert(char* name, int lineno, int loc) {
 		l->lines->next   = NULL;
 		l->next          = hashTable[h];
 		hashTable[h]     = l;
-	} else /* found in table, so just add line number */
-	{
+	} else {
 		LineList t = l->lines;
 		while (t->next != NULL) t = t->next;
 		t->next         = (LineList) malloc(sizeof(struct LineListRec));
 		t->next->lineno = lineno;
 		t->next->next   = NULL;
 	}
-} /* st_insert */
-
-/* Function st_lookup returns the memory
- * location of a variable or -1 if not found
- */
-int st_lookup(char* name) {
-	int        h = hash(name);
-	BucketList l = hashTable[h];
-	while ((l != NULL) && (strcmp(name, l->name) != 0)) l = l->next;
-	if (l == NULL)
-		return -1;
-	else
-		return l->memloc;
 }
 
-/* Procedure printSymTab prints a formatted
- * list of the symbol table contents
+/**
+ * @brief Looks up a symbol in the symbol table.
+ *
+ * @param name The name of the symbol to look up.
+ * @return The memory location of the symbol, or -1 if not found.
  */
-void printSymTab() {
-	int i;
+int symbolTableLookup(const char* name) {
+	const int  h = hash(name);
+	BucketList l = hashTable[h];
+	while (l != NULL && strcmp(name, l->name) != 0)
+		l = l->next;
+	if (l == NULL)
+		return -1;
+	return l->memloc;
+}
+
+/**
+ * @brief Prints the contents of the symbol table.
+ */
+void printSymbolTable() {
 	pc("Variable Name  Location   Line Numbers\n");
 	pc("-------------  --------   ------------\n");
-	for (i = 0; i < SIZE; ++i) {
+	for (int i = 0; i < SIZE; ++i) {
 		if (hashTable[i] != NULL) {
 			BucketList l = hashTable[i];
 			while (l != NULL) {
@@ -110,4 +90,4 @@ void printSymTab() {
 			}
 		}
 	}
-} /* printSymTab */
+}
