@@ -6,8 +6,8 @@
 void printToken(TokenType token, const char* tokenString);
 TreeNode* newStmtNode(StmtKind kind);
 TreeNode* newExpNode(ExpKind kind);
-char* copyString(const char* string);
-void printTree(const TreeNode* tree);
+char* copyString(char* string);
+void printTree(TreeNode* tree);
 void printLine();
 
 #endif

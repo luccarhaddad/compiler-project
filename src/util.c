@@ -135,17 +135,17 @@ TreeNode* newExpNode(const ExpKind kind) {
 /**
  * @brief Copies a string.
  *
- * @param string The string to copy.
+ * @param s The string to copy.
  * @return A pointer to the copied string.
  */
-char* copyString(const char* string) {
-	if (string == NULL) return NULL;
-	const int n = strlen(string) + 1;
+char* copyString(const char* s) {
+	if (s == NULL) return NULL;
+	const int n = strlen(s) + 1;
 	char*     t = malloc(n);
 	if (t == NULL)
 		pce("Out of memory error at line %d\n", lineno);
 	else
-		strcpy(t, string);
+		strcpy(t, s);
 	return t;
 }
 
