@@ -42,7 +42,6 @@ int yyerror(char *);
 %token SEMI COMMA
 
 /* Type declarations */
-%type <token> soma mult relacional
 %type <node>  programa declaracao_lista declaracao
 %type <node>  var_declaracao fun_declaracao
 %type <node>  params param_lista param composto_decl
@@ -50,6 +49,7 @@ int yyerror(char *);
 %type <node>  expressao_decl selecao_decl iteracao_decl retorno_decl
 %type <node>  expressao var simples_expressao soma_expressao
 %type <node>  termo fator ativacao args arg_lista
+%type <token> soma mult relacional
 %type <type>  tipo_especificador
 
 %% /* Grammar rules for C- */
@@ -89,14 +89,19 @@ var_declaracao:
             $$ = newStmtNode(VarK);
             $$->attr.name = $2;
             $$->type = $1;
+            $$->isArray = FALSE;
+            $$->lineno = lineno;
         }
     | tipo_especificador ID LBRACKET NUM RBRACKET SEMI
         {
             $$ = newStmtNode(VarK);
             $$->attr.name = $2;
             $$->type = $1;
+            $$->isArray = TRUE;
             $$->child[0] = newExpNode(ConstK);
             $$->child[0]->attr.val = $4;
+            $$->lineno = lineno;
+            $$->child[0]->parent = $$;
         }
     ;
 
@@ -108,13 +113,16 @@ tipo_especificador:
     ;
 
 fun_declaracao:
-    tipo_especificador ID LPAREN params RPAREN composto_decl
+    tipo_especificador ID { savedLineNo = lineno; } LPAREN params RPAREN composto_decl
         {
             $$ = newStmtNode(FuncK);
             $$->attr.name = $2;
             $$->type = $1;
-            $$->child[0] = $4;
-            $$->child[1] = $6;
+            $$->child[0] = $5;
+            $$->child[1] = $7;
+            $$->lineno = savedLineNo;
+            if($$->child[0]) $$->child[0]->parent = $$;
+            if($$->child[1]) $$->child[1]->parent = $$;
         }
     ;
 
@@ -148,29 +156,28 @@ param:
             $$ = newStmtNode(ParamK);
             $$->attr.name = $2;
             $$->type = $1;
-            $$->isArray = 0;
+            $$->isArray = FALSE;
+            $$->lineno = lineno;
         }
     | tipo_especificador ID LBRACKET RBRACKET
         {
             $$ = newStmtNode(ParamK);
             $$->attr.name = $2;
             $$->type = $1;
-            $$->isArray = 1;
+            $$->isArray = TRUE;
+            $$->lineno = lineno;
         }
     ;
 
 composto_decl:
     LBRACE local_declaracoes statement_lista RBRACE
         {
-            TreeNode* t = $2;
-            if (t != NULL) {
-                while(t->sibling != NULL)
-                    t = t->sibling;
-                t->sibling = $3;
-                $$ = $2;
-            } else {
-                $$ = $3;
-            }
+            $$ = newStmtNode(CompoundK);
+            $$->child[0] = $2;
+            $$->child[1] = $3;
+            $$->lineno = lineno;
+            if($$->child[0]) $$->child[0]->parent = $$;
+            if($$->child[1]) $$->child[1]->parent = $$;
         }
     ;
 
@@ -186,6 +193,7 @@ local_declaracoes:
             } else {
                 $$ = $2;
             }
+            $2->parent = NULL;
         }
     | %empty
         { $$ = NULL; }
@@ -203,6 +211,7 @@ statement_lista:
             } else {
                 $$ = $2;
             }
+            $2->parent = NULL;
         }
     | %empty
         { $$ = NULL; }
@@ -234,6 +243,9 @@ selecao_decl:
             $$ = newStmtNode(IfK);
             $$->child[0] = $3;
             $$->child[1] = $5;
+            $$->lineno = lineno;
+            if($$->child[0]) $$->child[0]->parent = $$;
+            if($$->child[1]) $$->child[1]->parent = $$;
         }
     | IF LPAREN expressao RPAREN statement ELSE statement
         {
@@ -241,6 +253,10 @@ selecao_decl:
             $$->child[0] = $3;
             $$->child[1] = $5;
             $$->child[2] = $7;
+            $$->lineno = lineno;
+            if($$->child[0]) $$->child[0]->parent = $$;
+            if($$->child[1]) $$->child[1]->parent = $$;
+            if($$->child[2]) $$->child[2]->parent = $$;
         }
     ;
 
@@ -250,16 +266,25 @@ iteracao_decl:
             $$ = newStmtNode(WhileK);
             $$->child[0] = $3;
             $$->child[1] = $5;
+            $$->lineno = lineno;
+            if($$->child[0]) $$->child[0]->parent = $$;
+            if($$->child[1]) $$->child[1]->parent = $$;
         }
     ;
 
 retorno_decl:
     RETURN SEMI
-        { $$ = newStmtNode(ReturnK); }
+        {
+            $$ = newStmtNode(ReturnK);
+            $$->child[0] = NULL;
+            $$->lineno = lineno;
+        }
     | RETURN expressao SEMI
         {
             $$ = newStmtNode(ReturnK);
             $$->child[0] = $2;
+            $$->lineno = lineno;
+            if($$->child[0]) $$->child[0]->parent = $$;
         }
     ;
 
@@ -269,6 +294,9 @@ expressao:
             $$ = newStmtNode(AssignK);
             $$->child[0] = $1;
             $$->child[1] = $3;
+            $$->lineno = lineno;
+            if($$->child[0]) $$->child[0]->parent = $$;
+            if($$->child[1]) $$->child[1]->parent = $$;
         }
     | simples_expressao
         { $$ = $1; }
@@ -279,12 +307,17 @@ var:
         {
             $$ = newExpNode(IdK);
             $$->attr.name = $1;
+            $$->isArray = FALSE;
+            $$->lineno = lineno;
         }
     | ID LBRACKET expressao RBRACKET
         {
             $$ = newExpNode(IdK);
             $$->attr.name = $1;
             $$->child[0] = $3;
+            $$->isArray = TRUE;
+            $$->lineno = lineno;
+            if($$->child[0]) $$->child[0]->parent = $$;
         }
     ;
 
@@ -295,6 +328,9 @@ simples_expressao:
             $$->child[0] = $1;
             $$->child[1] = $3;
             $$->attr.op = $2;
+            $$->lineno = lineno;
+            if($$->child[0]) $$->child[0]->parent = $$;
+            if($$->child[1]) $$->child[1]->parent = $$;
         }
     | soma_expressao
         { $$ = $1; }
@@ -322,6 +358,9 @@ soma_expressao:
             $$->child[0] = $1;
             $$->child[1] = $3;
             $$->attr.op = $2;
+            $$->lineno = lineno;
+            if($$->child[0]) $$->child[0]->parent = $$;
+            if($$->child[1]) $$->child[1]->parent = $$;
         }
     | termo
         { $$ = $1; }
@@ -341,6 +380,9 @@ termo:
             $$->child[0] = $1;
             $$->child[1] = $3;
             $$->attr.op = $2;
+            $$->lineno = lineno;
+            if($$->child[0]) $$->child[0]->parent = $$;
+            if($$->child[1]) $$->child[1]->parent = $$;
         }
     | fator
         { $$ = $1; }
@@ -370,6 +412,7 @@ fator:
         {
             $$ = newExpNode(ConstK);
             $$->attr.val = $1;
+            $$->lineno = lineno;
         }
     ;
 
@@ -379,6 +422,8 @@ ativacao:
             $$ = newExpNode(CallK);
             $$->attr.name = $1;
             $$->child[0] = $3;
+            $$->lineno = lineno;
+            if($$->child[0]) $$->child[0]->parent = $$;
         }
     ;
 
@@ -401,6 +446,7 @@ arg_lista:
             } else {
                 $$ = $3;
             }
+            $3->parent = NULL;
         }
     | expressao
         { $$ = $1; }
