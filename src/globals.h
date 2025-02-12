@@ -1,7 +1,6 @@
 #ifndef _GLOBALS_H_
 #define _GLOBALS_H_
 
-#include "log.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,41 +17,6 @@
 /* MAXRESERVED = the number of reserved words */
 #define MAXRESERVED 6
 
-// typedef enum
-// /* book-keeping tokens */
-// { ENDFILE,
-//   ERROR,
-//   /* reserved words */
-//   IF,
-//   ELSE,
-//   INT,
-//   RETURN,
-//   VOID,
-//   WHILE,
-//   /* multicharacter tokens */
-//   ID,
-//   NUM,
-//   /* special symbols */
-//   ASSIGN,
-//   EQ,
-//   NEQ,
-//   LT,
-//   LE,
-//   GT,
-//   GE,
-//   PLUS,
-//   MINUS,
-//   TIMES,
-//   OVER,
-//   LPAREN,
-//   RPAREN,
-//   LBRACKET,
-//   RBRACKET,
-//   LBRACE,
-//   RBRACE,
-//   SEMI,
-//   COMMA } TokenType;
-
 typedef int TokenType;
 
 extern FILE* source;           /* source code text file */
@@ -67,10 +31,8 @@ extern int lineno; /* source line number for listing */
 /**************************************************/
 
 typedef enum { StmtK, ExpK } NodeKind;
-typedef enum { IfK, WhileK, ReturnK, AssignK, ParamK, VarK, FuncK } StmtKind;
+typedef enum { IfK, WhileK, ReturnK, AssignK, ParamK, VarK, FuncK, CompoundK } StmtKind;
 typedef enum { OpK, ConstK, IdK, CallK } ExpKind;
-
-/* ExpType is used for type checking */
 typedef enum { Void, Integer, Boolean } ExpType;
 
 #define MAXCHILDREN 3
@@ -78,6 +40,7 @@ typedef enum { Void, Integer, Boolean } ExpType;
 typedef struct treeNode {
 	struct treeNode* child[MAXCHILDREN];
 	struct treeNode* sibling;
+	struct treeNode* parent;
 	int              lineno;
 	NodeKind         nodekind;
 	union {
