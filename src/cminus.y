@@ -291,7 +291,7 @@ retorno_decl:
 expressao:
     var ASSIGN expressao
         {
-            $$ = newStmtNode(AssignK);
+            $$ = newExpNode(AssignK);
             $$->child[0] = $1;
             $$->child[1] = $3;
             $$->lineno = lineno;
