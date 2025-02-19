@@ -98,7 +98,7 @@ void printToken(const TokenType token, const char* tokenString) {
  * @return A pointer to the new statement node.
  */
 TreeNode* newStmtNode(const StmtKind kind) {
-	TreeNode* t = (TreeNode*) malloc(sizeof(TreeNode));
+	TreeNode* t = malloc(sizeof(TreeNode));
 	if (t == NULL)
 		pce("Out of memory error at line %d\n", lineno);
 	else {
@@ -118,7 +118,7 @@ TreeNode* newStmtNode(const StmtKind kind) {
  * @return A pointer to the new expression node.
  */
 TreeNode* newExpNode(const ExpKind kind) {
-	TreeNode* t = (TreeNode*) malloc(sizeof(TreeNode));
+	TreeNode* t = malloc(sizeof(TreeNode));
 	if (t == NULL)
 		pce("Out of memory error at line %d\n", lineno);
 	else {
@@ -213,78 +213,86 @@ const char* ExpTypeToString(const ExpType type) {
  */
 void printTree(const TreeNode* tree) {
 	while (tree != NULL) {
-		printSpaces();
-		if (tree->nodekind == StmtK) {
-			switch (tree->kind.stmt) {
-				case IfK:
-					pc("Conditional selection\n");
-					break;
-				case WhileK:
-					pc("Iteration (loop)\n");
-					break;
-				case AssignK: {
-					const TreeNode* varNode = tree->child[0];
-					if (varNode->nodekind == ExpK && varNode->kind.exp == IdK) {
-						if (varNode->child[0] != NULL) {
-							pc("Assign to array: %s\n", varNode->attr.name);
-							INDENT;
-							if (varNode->child[0]->attr.val != 0) printTree(varNode->child[0]);
-							UNINDENT;
-						} else {
-							pc("Assign to var: %s\n", varNode->attr.name);
-						}
-					} else {
-						pc("Assign to: (unknown)\n");
-					}
-					break;
+		// Check if the node is a CompoundK. If so, don't print anything for it.
+		if (tree->nodekind == StmtK && tree->kind.stmt == CompoundK) {
+			for (int i = 0; i < MAXCHILDREN; i++) {
+				printTree(tree->child[i]);
+			}
+		} else {
+			printSpaces();
+			if (tree->nodekind == StmtK) {
+				switch (tree->kind.stmt) {
+					case IfK:
+						pc("Conditional selection\n");
+						break;
+					case WhileK:
+						pc("Iteration (loop)\n");
+						break;
+					case ReturnK:
+						pc("Return\n");
+						break;
+					case ParamK:
+						pc("Function param (%s %s): %s\n", ExpTypeToString(tree->type),
+						   tree->isArray ? "array" : "var", tree->attr.name);
+						break;
+					case VarK:
+						pc("Declare %s %s: %s\n", ExpTypeToString(tree->type),
+						   (tree->child[0] ? "array" : "var"), tree->attr.name);
+						break;
+					case FuncK:
+						pc("Declare function (return type \"%s\"): %s\n",
+						   ExpTypeToString(tree->type), tree->attr.name);
+						break;
+					// For CompoundK, do nothing.
+					default:
+						pce("Unknown Stmt kind\n");
+						break;
 				}
-				case ReturnK:
-					pc("Return\n");
-					break;
-				case ParamK:
-					pc("Function param (%s %s): %s\n", ExpTypeToString(tree->type),
-					   (tree->isArray ? "array" : "var"), tree->attr.name);
-					break;
-				case VarK:
-					pc("Declare %s %s: %s\n", ExpTypeToString(tree->type),
-					   (tree->child[0] ? "array" : "var"), tree->attr.name);
-					break;
-				case FuncK:
-					pc("Declare function (return type \"%s\"): %s\n", ExpTypeToString(tree->type),
-					   tree->attr.name);
-					break;
-				default:
-					pce("Unknown Stmt kind\n");
-					break;
+			} else if (tree->nodekind == ExpK) {
+				switch (tree->kind.exp) {
+					case OpK:
+						pc("Op: ");
+						printToken(tree->attr.op, "\0");
+						break;
+					case ConstK:
+						pc("Const: %d\n", tree->attr.val);
+						break;
+					case IdK:
+						pc("Id: %s\n", tree->attr.name);
+						break;
+					case CallK:
+						pc("Function call: %s\n", tree->attr.name);
+						break;
+					case AssignK: {
+						const TreeNode* varNode = tree->child[0];
+						if (varNode->nodekind == ExpK && varNode->kind.exp == IdK) {
+							if (varNode->child[0] != NULL) {
+								pc("Assign to array: %s\n", varNode->attr.name);
+								INDENT;
+								if (varNode->child[0]->attr.val != 0) printTree(varNode->child[0]);
+								UNINDENT;
+							} else {
+								pc("Assign to var: %s\n", varNode->attr.name);
+							}
+						} else {
+							pc("Assign to: (unknown)\n");
+						}
+						break;
+					}
+					default:
+						pce("Unknown ExpNode kind\n");
+						break;
+				}
+			} else {
+				pce("Unknown node kind\n");
 			}
-		} else if (tree->nodekind == ExpK) {
-			switch (tree->kind.exp) {
-				case OpK:
-					pc("Op: ");
-					printToken(tree->attr.op, "\0");
-					break;
-				case ConstK:
-					pc("Const: %d\n", tree->attr.val);
-					break;
-				case IdK:
-					pc("Id: %s\n", tree->attr.name);
-					break;
-				case CallK:
-					pc("Function call: %s\n", tree->attr.name);
-					break;
-				default:
-					pce("Unknown ExpNode kind\n");
-					break;
+
+			for (int i = 0; i < MAXCHILDREN; i++) {
+				if (tree->nodekind == ExpK && tree->kind.exp == AssignK && i == 0) continue;
+				INDENT;
+				printTree(tree->child[i]);
+				UNINDENT;
 			}
-		} else
-			pce("Unknown node kind\n");
-		for (int i = 0; i < MAXCHILDREN; i++) {
-			if (tree->nodekind == StmtK && tree->kind.stmt == AssignK && i == 0) {
-				continue;
-			}
-			INDENT;
-			printTree(tree->child[i]);
-			UNINDENT;
 		}
 		tree = tree->sibling;
 	}
