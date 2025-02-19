@@ -1,25 +1,17 @@
 #ifndef _SYMTAB_H_
 #define _SYMTAB_H_
 
-#define SIZE 211
-#define SHIFT 4
+#include "globals.h"
+#include <stdbool.h>
 
-typedef struct LineListRec {
-   int                 lineno;
-   struct LineListRec* next;
-}* LineList;
+extern Scope currentScope;
+extern Scope scopeList;
 
-typedef struct BucketListRec {
-   char*                 name;
-   LineList              lines;
-   int                   memloc;
-   struct BucketListRec* next;
-}* BucketList;
-
-static BucketList hashTable[SIZE];
-
-void symbolTableInsert(char* name, int lineno, int loc);
-int symbolTableLookup(const char* name);
-void printSymbolTable();
+void       symbolTableInsert(const char* name, int lineno, int loc, ExpType type, StmtKind kind,
+                             bool isArray, const char* scope);
+BucketList symbolTableLookup(const char* name);
+BucketList symbolTableLookupCurrentScope(const char* name);
+void       symbolTableAddLineNumberToSymbol(const char* name, int lineno);
+void       printSymbolTable();
 
 #endif

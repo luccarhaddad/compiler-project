@@ -1,5 +1,6 @@
 #include "symtab.h"
 
+#include <log.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -33,26 +34,26 @@ static int hash(const char* key) {
  * @param isArray Whether the symbol is an array.
  * @param scope The scope of the symbol.
  */
-void symbolTableInsert(const char* name, const int lineno, const int loc, const ExpType type, const StmtKind kind, const bool isArray, const char* scope) {
-	const int  h = hash(name);
+void symbolTableInsert(const char* name, const int lineno, const int loc, const ExpType type,
+                       const StmtKind kind, const bool isArray, const char* scope) {
+	const int  h      = hash(name);
 	BucketList symbol = currentScope->hashTable[h];
 
-	while (symbol != NULL && strcmp(name, symbol->name) != 0)
-		symbol = symbol->next;
+	while (symbol != NULL && strcmp(name, symbol->name) != 0) symbol = symbol->next;
 
 	if (symbol == NULL) {
-		symbol                = (BucketList) malloc(sizeof(struct BucketListRecord));
-		symbol->name          = strdup(name);
-		symbol->lines         = (LineList) malloc(sizeof(struct LineListRecord));
-		symbol->lines->lineno = lineno;
-		symbol->lines->next   = NULL;
-		symbol->memoryLocation= loc;
-		symbol->type          = type;
-		symbol->kind          = kind;
-		symbol->isArray       = isArray;
-		symbol->scope         = strdup(scope);
-		symbol->next          = currentScope->hashTable[h];
-		currentScope->hashTable[h]     = symbol;
+		symbol                     = (BucketList) malloc(sizeof(struct BucketListRecord));
+		symbol->name               = strdup(name);
+		symbol->lines              = (LineList) malloc(sizeof(struct LineListRecord));
+		symbol->lines->lineno      = lineno;
+		symbol->lines->next        = NULL;
+		symbol->memoryLocation     = loc;
+		symbol->type               = type;
+		symbol->kind               = kind;
+		symbol->isArray            = isArray;
+		symbol->scope              = strdup(scope);
+		symbol->next               = currentScope->hashTable[h];
+		currentScope->hashTable[h] = symbol;
 	} else {
 		symbolTableAddLineNumberToSymbol(symbol->name, lineno);
 	}
@@ -69,14 +70,13 @@ void symbolTableInsert(const char* name, const int lineno, const int loc, const 
  * @return A pointer to the BucketList containing the symbol, or NULL if not found.
  */
 BucketList symbolTableLookup(const char* name) {
+	if (!name) return NULL;
 	Scope scope = currentScope;
 	while (scope) {
-		const int  h = hash(name);
+		const int  h      = hash(name);
 		BucketList symbol = scope->hashTable[h];
-		while (symbol != NULL && strcmp(name, symbol->name) != 0)
-			symbol = symbol->next;
-		if (symbol)
-			return symbol;
+		while (symbol != NULL && strcmp(name, symbol->name) != 0) symbol = symbol->next;
+		if (symbol) return symbol;
 		scope = scope->parent;
 	}
 	return NULL;
@@ -91,11 +91,10 @@ BucketList symbolTableLookup(const char* name) {
  * @return A pointer to the BucketList containing the symbol, or NULL if not found.
  */
 BucketList symbolTableLookupCurrentScope(const char* name) {
-    const int  h = hash(name);
-    BucketList symbol = currentScope->hashTable[h];
-    while (symbol != NULL && strcmp(name, symbol->name) != 0)
-        symbol = symbol->next;
-    return symbol;
+	const int  h      = hash(name);
+	BucketList symbol = currentScope->hashTable[h];
+	while (symbol != NULL && strcmp(name, symbol->name) != 0) symbol = symbol->next;
+	return symbol;
 }
 
 /**
@@ -118,32 +117,58 @@ void symbolTableAddLineNumberToSymbol(const char* name, const int lineno) {
 			lineList = lineList->next;
 		}
 		LineList newLine = malloc(sizeof(struct LineListRecord));
-		newLine->lineno = lineno;
-		newLine->next = NULL;
-		previous->next = newLine;
+		newLine->lineno  = lineno;
+		newLine->next    = NULL;
+		previous->next   = newLine;
 	}
 }
 
-// /**
-//  * @brief Prints the contents of the symbol table.
-//  */
-// void printSymbolTable() {
-// 	pc("Variable Name  Location   Line Numbers\n");
-// 	pc("-------------  --------   ------------\n");
-// 	for (int i = 0; i < SIZE; ++i) {
-// 		if (hashTable[i] != NULL) {
-// 			BucketList l = hashTable[i];
-// 			while (l != NULL) {
-// 				LineList t = l->lines;
-// 				pc("%-14s ", l->name);
-// 				pc("%-8d  ", l->memoryLocation);
-// 				while (t != NULL) {
-// 					pc("%4d ", t->lineno);
-// 					t = t->next;
-// 				}
-// 				pc("\n");
-// 				l = l->next;
-// 			}
-// 		}
-// 	}
-// }
+/**
+ * @brief Prints the contents of the symbol table.
+ */
+void printSymbolTable() {
+	pc("Variable Name  Scope     ID Type  Data Type  Line Numbers\n");
+	pc("-------------  --------  -------  ---------  -------------------------\n");
+
+	Scope listOfScopes = scopeList;
+	while (listOfScopes) {
+		for (int i = 0; i < SIZE; i++) {
+			if (listOfScopes->hashTable[i]) {
+				BucketList symbol = listOfScopes->hashTable[i];
+				while (symbol) {
+					// Name
+					pc("%-14s ", symbol->name);
+
+					// Scope
+					if (strcmp(symbol->scope, "global") == 0)
+						pc(" %-9s", "");
+					else
+						pc(" %-9s", symbol->scope);
+
+					// Id Type
+					if (symbol->kind == FuncK) {
+						pc(" %-8s", "fun");
+					} else if (symbol->isArray) {
+						pc(" %-8s", "array");
+					} else {
+						pc(" %-8s", "var");
+					}
+
+					// Data Type
+					pc(" %-9s", symbol->type == Integer ? "Integer"
+					            : symbol->type == Void  ? "Void"
+					                                    : "Unknown");
+
+					LineList line = symbol->lines;
+					while (line) {
+						if (line->lineno > 0) pc("%2d ", line->lineno);
+						line = line->next;
+					}
+					pc("\n");
+					symbol = symbol->next;
+				}
+			}
+		}
+		listOfScopes = listOfScopes->next;
+	}
+}
