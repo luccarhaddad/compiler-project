@@ -5,10 +5,9 @@ project(ces41lex VERSION 0.1 LANGUAGES C)
 include(CMakePrintHelpers)
 cmake_print_variables(CMAKE_VERSION)
 
-set(DOPARSE FALSE)
-
 SET(DOPARSE TRUE CACHE BOOL "if false, bison is not used, and only lexical analysis is performed")
 SET(BISON_EXECUTABLE "/opt/homebrew/opt/bison/bin/bison")
+SET(CMAKE_BUILD_TYPE Debug)
 
 if(DOPARSE)
     find_package(BISON REQUIRED)
