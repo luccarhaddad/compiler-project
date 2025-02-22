@@ -15,6 +15,7 @@
 
 #define SIZE 211
 #define SHIFT 4
+#define MAX_MEMORY 1023
 
 #ifndef FALSE
 #define FALSE 0
@@ -64,7 +65,7 @@ typedef enum { IfK, WhileK, ReturnK, ParamK, VarK, FuncK, CompoundK } StmtKind;
 /**
  * @brief Enumeration for expression kinds in the syntax tree.
  */
-typedef enum { OpK, ConstK, IdK, CallK, AssignK } ExpKind;
+typedef enum { OpK, ConstK, IdK, CallK, AssignK, UnaryK } ExpKind;
 
 /**
  * @brief Enumeration for expression types.

@@ -263,6 +263,10 @@ void printTree(const TreeNode* tree) {
 					case CallK:
 						pc("Function call: %s\n", tree->attr.name);
 						break;
+					case UnaryK:
+						pc("Unary: ");
+						printToken(tree->attr.op, "\0");
+						break;
 					case AssignK: {
 						const TreeNode* varNode = tree->child[0];
 						if (varNode->nodekind == ExpK && varNode->kind.exp == IdK) {

@@ -48,9 +48,17 @@ int yyerror(char *);
 %type <node>  local_declaracoes statement_lista statement
 %type <node>  expressao_decl selecao_decl iteracao_decl retorno_decl
 %type <node>  expressao var simples_expressao soma_expressao
-%type <node>  termo fator ativacao args arg_lista
-%type <token> soma mult relacional
+%type <node>  termo fator ativacao args arg_lista unario_expressao
+%type <token> soma mult relacional unario_op
 %type <type>  tipo_especificador
+
+/* Precedence rules */
+%right ASSIGN
+%left EQ NEQ
+%left LT GT LEQ GEQ
+%left PLUS MINUS
+%left TIMES OVER
+%right UMINUS
 
 %% /* Grammar rules for C- */
 
@@ -374,7 +382,7 @@ soma:
     ;
 
 termo:
-    termo mult fator
+    termo mult unario_expressao
         {
             $$ = newExpNode(OpK);
             $$->child[0] = $1;
@@ -384,8 +392,29 @@ termo:
             if($$->child[0]) $$->child[0]->parent = $$;
             if($$->child[1]) $$->child[1]->parent = $$;
         }
+    | unario_expressao
+        { $$ = $1; }
+    ;
+
+unario_expressao:
+    unario_op unario_expressao
+        {
+            $$ = newExpNode(UnaryK);
+            $$->child[0] = $2;
+            $$->child[1] = NULL;
+            $$->attr.op = $1;
+            $$->lineno = lineno;
+            if($$->child[0]) $$->child[0]->parent = $$;
+        }
     | fator
         { $$ = $1; }
+    ;
+
+unario_op:
+    MINUS
+        { $$ = MINUS; }
+    | PLUS
+        { $$ = PLUS; }
     ;
 
 mult:
@@ -396,13 +425,7 @@ mult:
     ;
 
 fator:
-    soma fator
-        {
-            $$ = newExpNode(OpK);
-            $$->attr.op = $1;
-            $$->child[0] = $2;
-        }
-    | LPAREN expressao RPAREN
+    LPAREN expressao RPAREN
         { $$ = $2; }
     | var
         { $$ = $1; }

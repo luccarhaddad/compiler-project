@@ -34,7 +34,7 @@ FILE* redundant_source;
 int EchoSource   = TRUE;
 int TraceScan    = TRUE;
 int TraceParse   = TRUE;
-int TraceAnalyze = FALSE;
+int TraceAnalyze = TRUE;
 int TraceCode    = FALSE;
 
 int Error = FALSE;

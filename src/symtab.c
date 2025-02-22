@@ -112,7 +112,7 @@ void symbolTableAddLineNumberToSymbol(const char* name, const int lineno) {
 		LineList lineList = symbol->lines;
 		LineList previous = NULL;
 		while (lineList) {
-			if (previous && previous->lineno == lineno) return;
+			if (lineList->lineno == lineno) return;
 			previous = lineList;
 			lineList = lineList->next;
 		}
@@ -141,24 +141,25 @@ void printSymbolTable() {
 
 					// Scope
 					if (strcmp(symbol->scope, "global") == 0)
-						pc(" %-9s", "");
+						pc("%-9s ", "");
 					else
-						pc(" %-9s", symbol->scope);
+						pc("%-9s ", symbol->scope);
 
 					// Id Type
 					if (symbol->kind == FuncK) {
-						pc(" %-8s", "fun");
+						pc("%-8s ", "fun");
 					} else if (symbol->isArray) {
-						pc(" %-8s", "array");
+						pc("%-8s ", "array");
 					} else {
-						pc(" %-8s", "var");
+						pc("%-8s ", "var");
 					}
 
 					// Data Type
-					pc(" %-9s", symbol->type == Integer ? "Integer"
-					            : symbol->type == Void  ? "Void"
+					pc("%-9s ", symbol->type == Integer ? "int"
+					            : symbol->type == Void  ? "void"
 					                                    : "Unknown");
 
+					pc(" ");
 					LineList line = symbol->lines;
 					while (line) {
 						if (line->lineno > 0) pc("%2d ", line->lineno);
