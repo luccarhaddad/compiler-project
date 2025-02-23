@@ -11,6 +11,7 @@ void       symbolTableInsert(const char* name, int lineno, int loc, ExpType type
                              bool isArray, const char* scope);
 BucketList symbolTableLookup(const char* name);
 BucketList symbolTableLookupCurrentScope(const char* name);
+BucketList symbolTableLookupFromScope(const char* name, Scope scope);
 void       symbolTableAddLineNumberToSymbol(const char* name, int lineno);
 void       printSymbolTable();
 

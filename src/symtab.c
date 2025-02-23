@@ -98,6 +98,27 @@ BucketList symbolTableLookupCurrentScope(const char* name) {
 }
 
 /**
+ * @brief Looks up a symbol from a specific scope.
+ *
+ * This function searches for a symbol by name within a given scope.
+ *
+ * @param name The name of the symbol to look up.
+ * @param scope The scope in which to search for the symbol.
+ * @return A pointer to the BucketList containing the symbol, or NULL if not found.
+ */
+BucketList symbolTableLookupFromScope(const char* name, Scope scope) {
+	if (!name) return NULL;
+	while (scope) {
+		const int  h      = hash(name);
+		BucketList symbol = scope->hashTable[h];
+		while (symbol != NULL && strcmp(name, symbol->name) != 0) symbol = symbol->next;
+		if (symbol) return symbol;
+		scope = scope->parent;
+	}
+	return NULL;
+}
+
+/**
  * @brief Adds a line number to an existing symbol in the symbol table.
  *
  * This function adds a new line number to the list of line numbers for a given symbol.

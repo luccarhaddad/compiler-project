@@ -66,8 +66,12 @@ static void enterScope(const char* name) {
  * @param node The syntax tree node.
  */
 static void exitScope(TreeNode* node) {
-	if (node->kind.stmt == CompoundK) {
+	if (node->nodekind == StmtK && node->kind.stmt == CompoundK) {
 		currentScope = currentScope->parent;
+	}
+	if (node->nodekind == StmtK && node->kind.stmt == FuncK) {
+		if (currentScope->parent)
+			currentScope = currentScope->parent;
 	}
 }
 
@@ -106,6 +110,7 @@ static void nullProc(TreeNode* node) {
  * @param node The syntax tree node to insert.
  */
 static void insertNode(TreeNode* node) {
+	node->scope = currentScope;
 	switch (node->nodekind) {
 		case StmtK: {
 			switch (node->kind.stmt) {
@@ -309,7 +314,7 @@ static void checkNode(TreeNode* node) {
 						break;
 					}
 					if (node->child[1]->kind.exp == CallK) {
-						const BucketList symbol = node->attr.name ? symbolTableLookup(node->child[1]->attr.name) : NULL;
+						const BucketList symbol = node->child[1]->attr.name ? symbolTableLookup(node->child[1]->attr.name) : NULL;
 						if (!symbol) break;
 						if (symbol->type != Integer) {
 							pce("Semantic error at line %d: invalid use of void expression", node->lineno);
@@ -321,7 +326,7 @@ static void checkNode(TreeNode* node) {
 						break;
 					}
 					if (node->child[1]->kind.exp == IdK) {
-						if (!symbolTableLookup(node->child[1]->attr.name)) {
+						if (!symbolTableLookupFromScope(node->child[1]->attr.name, node->child[1]->scope)) {
 							pce("Variable %s not declared\n", node->child[1]->attr.name);
 							break;
 						}
