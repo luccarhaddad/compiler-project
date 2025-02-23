@@ -3,7 +3,7 @@
 
 #include "globals.h"
 
-/* Function parse returns the newly 
+/* Function parse returns the newly
  * constructed syntax tree
  */
 TreeNode* parse(void);

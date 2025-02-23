@@ -46,6 +46,7 @@ if(DOPARSE)
             ${lablib}
             ${BISON_myparser_OUTPUTS}
             ${FLEX_scanner_OUTPUTS}
+            src/hash.c
     )
     target_include_directories(mycmcomp PUBLIC ${CES41_SRC})
     target_link_libraries(mycmcomp ${FL_LIBRARY})
@@ -54,6 +55,7 @@ else()
             ${labSrc}
             ${lablib}
             ${FLEX_scanner_OUTPUTS}
+            src/hash.c
     )
     target_include_directories(mycmcomp PUBLIC ${CES41_SRC})
     target_link_libraries(mycmcomp ${FLEX_LIBRARIES} ${FL_LIBRARY})

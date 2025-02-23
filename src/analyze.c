@@ -70,8 +70,7 @@ static void exitScope(TreeNode* node) {
 		currentScope = currentScope->parent;
 	}
 	if (node->nodekind == StmtK && node->kind.stmt == FuncK) {
-		if (currentScope->parent)
-			currentScope = currentScope->parent;
+		if (currentScope->parent) currentScope = currentScope->parent;
 	}
 }
 
@@ -121,12 +120,13 @@ static void insertNode(TreeNode* node) {
 					localMemoryOffset = MAX_MEMORY - 2;
 
 					if (symbolTableLookup(node->attr.name)) {
-						pce("Semantic error at line %d: %s was already declared\n", node->attr.name);
+						pce("Semantic error at line %d: %s was already declared\n",
+						    node->attr.name);
 						Error = TRUE;
 						break;
 					}
 					symbolTableInsert(node->attr.name, node->lineno, MAX_MEMORY - 1, node->type,
-									  node->kind.stmt, node->isArray, "global");
+					                  node->kind.stmt, node->isArray, "global");
 					enterScope(node->attr.name);
 					currentFunction = node->attr.name;
 					break;
@@ -135,16 +135,18 @@ static void insertNode(TreeNode* node) {
 				case ParamK: {
 					if (!symbolTableLookupCurrentScope(node->attr.name)) {
 						if (strcmp(currentScope->name, "global") == 0) {
-							symbolTableInsert(node->attr.name, node->lineno, globalMemoryOffset++, node->type,
-											  node->kind.stmt, node->isArray, currentScope->name);
+							symbolTableInsert(node->attr.name, node->lineno, globalMemoryOffset++,
+							                  node->type, node->kind.stmt, node->isArray,
+							                  currentScope->name);
 							break;
 						}
-						symbolTableInsert(node->attr.name, node->lineno, localMemoryOffset--, node->type,
-										  node->kind.stmt, node->isArray, currentScope->name);
+						symbolTableInsert(node->attr.name, node->lineno, localMemoryOffset--,
+						                  node->type, node->kind.stmt, node->isArray,
+						                  currentScope->name);
 						break;
 					}
 					pce("Semantic error at line %d: '%s' was already declared as a variable\n",
-						node->lineno, node->attr.name);
+					    node->lineno, node->attr.name);
 					Error = TRUE;
 					break;
 				}
@@ -161,7 +163,7 @@ static void insertNode(TreeNode* node) {
 
 					if (globalSymbol && globalSymbol->kind == FuncK) {
 						pce("Semantic error at line %d: '%s' was already declared as a function\n",
-							node->lineno, node->attr.name);
+						    node->lineno, node->attr.name);
 						Error = TRUE;
 						break;
 					}
@@ -170,32 +172,33 @@ static void insertNode(TreeNode* node) {
 						if (strcmp(currentScope->name, "global") == 0) {
 							if (node->isArray) {
 								globalMemoryOffset += node->child[0]->attr.val;
-								symbolTableInsert(node->attr.name, node->lineno, globalMemoryOffset++,
-												  node->type, node->kind.stmt, node->isArray,
-												  currentScope->name);
+								symbolTableInsert(node->attr.name, node->lineno,
+								                  globalMemoryOffset++, node->type, node->kind.stmt,
+								                  node->isArray, currentScope->name);
 								break;
 							}
 							symbolTableInsert(node->attr.name, node->lineno, globalMemoryOffset++,
-											  node->type, node->kind.stmt, node->isArray,
-											  currentScope->name);
+							                  node->type, node->kind.stmt, node->isArray,
+							                  currentScope->name);
 							break;
 						}
 
 						if (node->isArray) {
 							symbolTableInsert(node->attr.name, node->lineno, localMemoryOffset--,
-											  node->type, node->kind.stmt, node->isArray,
-											  currentScope->name);
+							                  node->type, node->kind.stmt, node->isArray,
+							                  currentScope->name);
 							localMemoryOffset -= node->child[0]->attr.val;
 							break;
 						}
-						symbolTableInsert(node->attr.name, node->lineno, localMemoryOffset--, node->type,
-										  node->kind.stmt, node->isArray, currentScope->name);
+						symbolTableInsert(node->attr.name, node->lineno, localMemoryOffset--,
+						                  node->type, node->kind.stmt, node->isArray,
+						                  currentScope->name);
 						break;
 					}
 
 					if (strcmp(localSymbol->scope, currentScope->name) == 0) {
 						pce("Semantic error at line %d: '%s' was already declared as a variable\n",
-							node->lineno, node->attr.name);
+						    node->lineno, node->attr.name);
 						Error = TRUE;
 						break;
 					}
@@ -209,19 +212,21 @@ static void insertNode(TreeNode* node) {
 
 					if (symbol->type != Void && !node->child[0]) {
 						pce("Semantic error at line %d: Missing return value in function returning "
-							"non-void\n",
-							node->lineno);
+						    "non-void\n",
+						    node->lineno);
 						Error = TRUE;
 						break;
 					}
 				}
 				// OK
 				case CompoundK: {
-					if (compoundScopeFromFunctionDeclaration ||
-						strcmp(currentScope->name, "global") == 0) {
+					if (compoundScopeFromFunctionDeclaration) {
 						compoundScopeFromFunctionDeclaration = FALSE;
 						break;
-						}
+					}
+					if (strcmp(currentScope->name, "global") == 0) {
+						break;
+					}
 					numberOfCompoundScopes++;
 					char scopeName[25];
 					sprintf(scopeName, "compound%d", numberOfCompoundScopes);
@@ -241,7 +246,7 @@ static void insertNode(TreeNode* node) {
 				case CallK: {
 					if (!symbolTableLookup(node->attr.name)) {
 						pce("Semantic error at line %d: '%s' was not declared in this scope\n",
-							node->lineno, node->attr.name);
+						    node->lineno, node->attr.name);
 						Error = TRUE;
 						break;
 					}
@@ -293,10 +298,10 @@ static void checkNode(TreeNode* node) {
 						break;
 					}
 					if (node->attr.op == EQ || node->attr.op == NEQ || node->attr.op == LT ||
-						node->attr.op == LEQ || node->attr.op == GT || node->attr.op == GEQ) {
+					    node->attr.op == LEQ || node->attr.op == GT || node->attr.op == GEQ) {
 						node->type = Boolean;
 						break;
-						}
+					}
 					node->type = Integer;
 					break;
 				}
@@ -306,7 +311,8 @@ static void checkNode(TreeNode* node) {
 				}
 				case AssignK: {
 					if (!node->child[1]) {
-						pce("Semantic error at line %d: assign operation needs two operands", node->lineno);
+						pce("Semantic error at line %d: assign operation needs two operands",
+						    node->lineno);
 						break;
 					}
 					if (node->child[1]->nodekind && node->child[1]->nodekind != ExpK) {
@@ -314,19 +320,24 @@ static void checkNode(TreeNode* node) {
 						break;
 					}
 					if (node->child[1]->kind.exp == CallK) {
-						const BucketList symbol = node->child[1]->attr.name ? symbolTableLookup(node->child[1]->attr.name) : NULL;
+						const BucketList symbol = node->child[1]->attr.name
+						                              ? symbolTableLookup(node->child[1]->attr.name)
+						                              : NULL;
 						if (!symbol) break;
 						if (symbol->type != Integer) {
-							pce("Semantic error at line %d: invalid use of void expression", node->lineno);
+							pce("Semantic error at line %d: invalid use of void expression",
+							    node->lineno);
 							break;
 						}
 					}
 					if (node->child[1]->type != Integer) {
-						pce("Semantic error at line %d: invalid use of void expression", node->lineno);
+						pce("Semantic error at line %d: invalid use of void expression",
+						    node->lineno);
 						break;
 					}
 					if (node->child[1]->kind.exp == IdK) {
-						if (!symbolTableLookupFromScope(node->child[1]->attr.name, node->child[1]->scope)) {
+						if (!symbolTableLookupFromScope(node->child[1]->attr.name,
+						                                node->child[1]->scope)) {
 							pce("Variable %s not declared\n", node->child[1]->attr.name);
 							break;
 						}
@@ -335,7 +346,7 @@ static void checkNode(TreeNode* node) {
 				}
 				case CallK: {
 					const BucketList symbol =
-						node->attr.name ? symbolTableLookup(node->attr.name) : NULL;
+					    node->attr.name ? symbolTableLookup(node->attr.name) : NULL;
 					if (symbol) {
 						node->type = symbol->type;
 						break;
@@ -358,8 +369,8 @@ static void checkNode(TreeNode* node) {
 
 					if (symbol->type != Void && !node->child[0]) {
 						pce("Semantic error at line %d: Missing return value in function returning "
-							"non-void\n",
-							node->lineno);
+						    "non-void\n",
+						    node->lineno);
 						Error = TRUE;
 					}
 					break;

@@ -8,7 +8,7 @@
 /* set NO_CODE to TRUE to get a compiler that does not
  * generate code
  */
-#define NO_CODE TRUE
+#define NO_CODE FALSE
 
 #include "util.h"
 #if NO_PARSE
@@ -35,7 +35,7 @@ int EchoSource   = TRUE;
 int TraceScan    = TRUE;
 int TraceParse   = TRUE;
 int TraceAnalyze = TRUE;
-int TraceCode    = FALSE;
+int TraceCode    = TRUE;
 
 int Error = FALSE;
 
@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
 
 	//// opening sources ////
 	char pgm[120]; /* source code file name */
-	if ((argc < 2) || (argc > 3)) {
+	if (argc < 2 || argc > 3) {
 		fprintf(stderr, "usage: %s <filename> [<detailpath>]\n", argv[0]);
 		exit(1);
 	}
@@ -92,24 +92,15 @@ int main(int argc, char* argv[]) {
 		if (TraceAnalyze) fprintf(listing, "\nType Checking Finished\n");
 	}
 #if !NO_CODE
+	doneTABstartGEN();
 	if (!Error) {
-		char* codefile;
-		int   fnlen = strcspn(pgm, ".");
-		codefile    = (char*) calloc(fnlen + 4, sizeof(char));
-		strncpy(codefile, pgm, fnlen);
-		strcat(codefile, ".tm");
-		code = fopen(codefile, "w");
-		if (code == NULL) {
-			printf("Unable to open %s\n", codefile);
-			exit(1);
-		}
-		codeGen(syntaxTree, codefile);
-		fclose(code);
+		generateCode(syntaxTree);
 	}
 #endif
 #endif
 #endif
 	fclose(source);
-	fclose(redundant_source);
+	//fclose(redundant_source);
+	closePrinter();
 	return 0;
 }
