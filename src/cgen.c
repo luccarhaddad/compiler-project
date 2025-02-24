@@ -18,7 +18,6 @@ static void generateStatementCode(TreeNode* node) {
 	int savedLocation1, savedLocation2, savedLocation3;
 
 	switch (node->kind.stmt) {
-		// Alterado
 		case FuncK: {
 			char comment[50];
 			sprintf(comment, "-> Init Function (%s)", node->attr.name);
@@ -74,7 +73,6 @@ static void generateStatementCode(TreeNode* node) {
 			emitComment("<- End Function");
 			break;
 		}
-		// OK
 		case ParamK: {
 			if (node->isArray) {
 				emitComment("-> Param vector");
@@ -87,7 +85,6 @@ static void generateStatementCode(TreeNode* node) {
 			emitComment("<- Param");
 			break;
 		}
-		// OK
 		case VarK: {
 			if (node->isArray) {
 				emitComment("-> declare vector");
@@ -111,7 +108,6 @@ static void generateStatementCode(TreeNode* node) {
 			emitComment("<- declare var");
 			break;
 		}
-		// OK
 		case ReturnK: {
 			emitComment("-> return");
 
@@ -126,7 +122,6 @@ static void generateStatementCode(TreeNode* node) {
 			emitComment("<- return");
 			break;
 		}
-		// OK
 		case CompoundK: {
 			sprintf(currentScopeName, "compound%d", numberOfCompoundScopes);
 
@@ -141,7 +136,6 @@ static void generateStatementCode(TreeNode* node) {
 			}
 			break;
 		}
-		// OK
 		case IfK: {
 			emitComment("-> if");
 
@@ -175,7 +169,6 @@ static void generateStatementCode(TreeNode* node) {
 			emitComment("<- if");
 			break;
 		}
-		// Alterado
 		case WhileK: {
 			emitComment("-> while");
 			emitComment("repeat: jump after body comes back here");
@@ -210,7 +203,6 @@ static void generateExpressionCode(TreeNode* node) {
 	BucketList symbol;
 
 	switch (node->kind.exp) {
-		// OK
 		case OpK: {
 			emitComment("-> Op");
 
@@ -298,7 +290,6 @@ static void generateExpressionCode(TreeNode* node) {
 			emitComment("<- Op");
 			break;
 		}
-		// Alterado
 		case IdK: {
 			emitComment("-> Id");
 
@@ -343,7 +334,6 @@ static void generateExpressionCode(TreeNode* node) {
 			emitComment("<- Id");
 			break;
 		}
-		// OK
 		case CallK: {
 			char comment[50];
 			sprintf(comment, "-> Function call (%s)", node->attr.name);
@@ -379,7 +369,6 @@ static void generateExpressionCode(TreeNode* node) {
 			}
 			break;
 		}
-		// OK
 		case AssignK: {
 			if (node->child[0]->isArray) {
 				emitComment("-> assign vector");
@@ -427,11 +416,24 @@ static void generateExpressionCode(TreeNode* node) {
 			emitComment("<- assign");
 			break;
 		}
-		// OK
 		case ConstK: {
 			emitComment("-> Const");
 			emitRM("LDC", ACCUMULATOR, node->attr.val, 0, "load const");
 			emitComment("<- Const");
+			break;
+		}
+		case UnaryK: {
+			emitComment("-> Unary");
+
+			if (node->child[0])
+				cGen(node->child[0]);
+
+			if (node->attr.op == MINUS) {
+				emitRM("LDC", ACCUMULATOR_1, 0, 0, "load constant 0");
+				emitRO("SUB", ACCUMULATOR, ACCUMULATOR_1, ACCUMULATOR, "unary -");
+			}
+
+			emitComment("<- Unary");
 			break;
 		}
 		default:

@@ -131,7 +131,6 @@ static void insertNode(TreeNode* node) {
 					currentFunction = node->attr.name;
 					break;
 				}
-				// OK
 				case ParamK: {
 					if (!symbolTableLookupCurrentScope(node->attr.name)) {
 						if (strcmp(currentScope->name, "global") == 0) {
@@ -150,7 +149,6 @@ static void insertNode(TreeNode* node) {
 					Error = TRUE;
 					break;
 				}
-				// OK
 				case VarK: {
 					if (node->type == Void) {
 						pce("Semantic error at line %d: variable declared void\n", node->lineno);
@@ -203,7 +201,6 @@ static void insertNode(TreeNode* node) {
 						break;
 					}
 				}
-				// OK
 				case ReturnK: {
 					if (!currentFunction) break;
 
@@ -218,7 +215,6 @@ static void insertNode(TreeNode* node) {
 						break;
 					}
 				}
-				// OK
 				case CompoundK: {
 					if (compoundScopeFromFunctionDeclaration) {
 						compoundScopeFromFunctionDeclaration = FALSE;
