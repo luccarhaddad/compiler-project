@@ -17,7 +17,8 @@ void emitComment(char* comment) {
 	if (TraceCode) pc("* %s\n", comment);
 }
 
-void emitRO(char* opcode, const int targetReg, const int srcReg1, const int srcReg2, char* comment) {
+void emitRO(char* opcode, const int targetReg, const int srcReg1, const int srcReg2,
+            char* comment) {
 	pc("%3d:  %5s  %d,%d,%d ", emitLoc++, opcode, targetReg, srcReg1, srcReg2);
 	if (TraceCode) pc("\t%s", comment);
 	pc("\n");
@@ -32,7 +33,8 @@ void emitRM(char* opcode, const int targetReg, const int offset, const int baseR
 }
 
 void emitRM_Abs(char* opcode, const int targetReg, const int absLocation, char* comment) {
-	pc("%3d:  %5s  %d,%d(%d) ", emitLoc, opcode, targetReg, absLocation - (emitLoc + 1), PROGRAM_COUNTER);
+	pc("%3d:  %5s  %d,%d(%d) ", emitLoc, opcode, targetReg, absLocation - (emitLoc + 1),
+	   PROGRAM_COUNTER);
 	++emitLoc;
 	if (TraceCode) pc("\t%s", comment);
 	pc("\n");

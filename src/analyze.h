@@ -3,7 +3,18 @@
 
 #include "globals.h"
 
-void buildSymbolTable(TreeNode*);
-void typeCheck(TreeNode*);
+/**
+ * \brief Builds the symbol table for the given syntax tree.
+ *
+ * \param tree The root of the syntax tree.
+ */
+void buildSymbolTable(TreeNode* tree);
+
+/**
+ * \brief Performs type checking on the given syntax tree.
+ *
+ * \param tree The root of the syntax tree.
+ */
+void typeCheck(TreeNode* tree);
 
 #endif

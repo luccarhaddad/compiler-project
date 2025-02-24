@@ -100,7 +100,6 @@ int main(int argc, char* argv[]) {
 #endif
 #endif
 	fclose(source);
-	//fclose(redundant_source);
 	closePrinter();
 	return 0;
 }

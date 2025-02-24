@@ -10,13 +10,13 @@
 /* Global pointer register, points to the bottom of memory for global variable storage */
 #define GLOBAL_POINTER 5
 
-/* Frame pointer register, points to the current frame */
+/* Third accumulator register (auxiliar) */
 #define ACCUMULATOR_2 4
 
 /* Index pointer, used for indexing operations */
 #define INDEX_POINTER 3
 
-/* Third accumulator register */
+/* Frame pointer register, points to the current frame */
 #define FRAME_POINTER 2
 
 /* Second accumulator register */
@@ -39,7 +39,7 @@ void emitComment(char* comment);
  * @param targetReg The target register.
  * @param srcReg1 The first source register.
  * @param srcReg2 The second source register.
-*/
+ */
 void emitRO(char* opcode, int targetReg, int srcReg1, int srcReg2, char* comment);
 
 /**

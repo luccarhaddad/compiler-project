@@ -1,15 +1,41 @@
 #include "cgen.h"
 #include "code.h"
-#include "symtab.h"
 #include "hash.h"
+#include "symtab.h"
 
+/**
+ * Default memory location for the main function.
+ */
 #define DEFAULT_MAIN_LOCATION 3
 
+/**
+ * Temporary offset for memory locations.
+ */
 static int tmpOffset = -2;
+
+/**
+ * Counter for the number of compound scopes.
+ */
 static int numberOfCompoundScopes = 0;
+
+/**
+ * Name of the current scope.
+ */
 static char* currentScopeName = "global";
+
+/**
+ * Flag indicating if parameters are from a function call.
+ */
 static bool areParametersFromFunctionCall = FALSE;
+
+/**
+ * Flag indicating if the first declared function is being processed.
+ */
 static bool isFirstDeclaredFunction = TRUE;
+
+/**
+ * Memory location of the main function.
+ */
 static int mainFunctionMemoryLocation = 3;
 
 static void cGen(TreeNode* tree);
@@ -27,14 +53,14 @@ static void generateStatementCode(TreeNode* node) {
 
 			if (isFirstDeclaredFunction) {
 				mainFunctionMemoryLocation = emitSkip(1);
-				isFirstDeclaredFunction = FALSE;
+				isFirstDeclaredFunction    = FALSE;
 				insert(node->attr.name, mainFunctionMemoryLocation + 1);
 			} else {
 				insert(node->attr.name, initialLocation);
 			}
 
 			currentScopeName = node->attr.name;
-			tmpOffset = -2;
+			tmpOffset        = -2;
 
 			if (strcmp(node->attr.name, "main") == 0) {
 				savedLocation1 = emitSkip(0);
@@ -46,11 +72,9 @@ static void generateStatementCode(TreeNode* node) {
 
 				emitRestore();
 
-				if (node->child[0])
-					cGen(node->child[0]);
+				if (node->child[0]) cGen(node->child[0]);
 
-				if (node->child[1])
-					cGen(node->child[1]);
+				if (node->child[1]) cGen(node->child[1]);
 
 				emitComment("<- End Function");
 				break;
@@ -58,11 +82,9 @@ static void generateStatementCode(TreeNode* node) {
 
 			emitRM("ST", ACCUMULATOR, -1, FRAME_POINTER, "store return address");
 
-			if (node->child[0])
-				cGen(node->child[0]);
+			if (node->child[0]) cGen(node->child[0]);
 
-			if (node->child[1])
-				cGen(node->child[1]);
+			if (node->child[1]) cGen(node->child[1]);
 
 			if (node->type == Void) {
 				emitRM("LDA", ACCUMULATOR_1, 0, FRAME_POINTER, "save current fp into ac1");
@@ -90,10 +112,11 @@ static void generateStatementCode(TreeNode* node) {
 				emitComment("-> declare vector");
 				if (strcmp(node->scope->name, "global") == 0) {
 					BucketList symbol = symbolTableLookupFromScope(node->attr.name, node->scope);
-					const int memoryLocation = symbol->memoryLocation;
+					const int  memoryLocation = symbol->memoryLocation;
 					emitRM("LDC", ACCUMULATOR, memoryLocation, 0, "load global position to ac");
 					emitRM("LDC", GLOBAL_POINTER, 0, 0, "load 0");
-					emitRM("ST", ACCUMULATOR, memoryLocation, GLOBAL_POINTER, "store global position");
+					emitRM("ST", ACCUMULATOR, memoryLocation, GLOBAL_POINTER,
+					       "store global position");
 					emitComment("<- declare vector");
 					break;
 				}
@@ -299,9 +322,11 @@ static void generateExpressionCode(TreeNode* node) {
 				// Global array
 				if (strcmp(symbol->scope, "global") == 0) {
 					emitRM("LDC", GLOBAL_POINTER, 0, 0, "load 0");
-					emitRM("LD", ACCUMULATOR, symbol->memoryLocation, GLOBAL_POINTER, "get the address of the vector");
+					emitRM("LD", ACCUMULATOR, symbol->memoryLocation, GLOBAL_POINTER,
+					       "get the address of the vector");
 				} else { // Local array
-					emitRM("LD", ACCUMULATOR, symbol->memoryLocation - MAX_MEMORY, FRAME_POINTER, "get the address of the vector");
+					emitRM("LD", ACCUMULATOR, symbol->memoryLocation - MAX_MEMORY, FRAME_POINTER,
+					       "get the address of the vector");
 				}
 
 				// Array indexing
@@ -310,9 +335,11 @@ static void generateExpressionCode(TreeNode* node) {
 					arrayIndex = node->child[0]->attr.val;
 					emitRM("LDC", INDEX_POINTER, arrayIndex, 0, "get the value of the index");
 				} else {
-					symbol = symbolTableLookupFromScope(node->child[0]->attr.name, node->child[0]->scope);
+					symbol     = symbolTableLookupFromScope(node->child[0]->attr.name,
+					                                        node->child[0]->scope);
 					arrayIndex = symbol->memoryLocation - MAX_MEMORY;
-					emitRM("LD", INDEX_POINTER, arrayIndex, FRAME_POINTER, "get the value of the index");
+					emitRM("LD", INDEX_POINTER, arrayIndex, FRAME_POINTER,
+					       "get the value of the index");
 				}
 
 				emitRM("LDC", ACCUMULATOR_2, 1, 0, "load 1");
@@ -328,7 +355,8 @@ static void generateExpressionCode(TreeNode* node) {
 				emitRM("LDC", GLOBAL_POINTER, 0, 0, "load 0");
 				emitRM("LD", ACCUMULATOR, symbol->memoryLocation, GLOBAL_POINTER, "load id value");
 			} else {
-				emitRM("LD", ACCUMULATOR, symbol->memoryLocation - MAX_MEMORY, FRAME_POINTER, "load id value");
+				emitRM("LD", ACCUMULATOR, symbol->memoryLocation - MAX_MEMORY, FRAME_POINTER,
+				       "load id value");
 			}
 
 			emitComment("<- Id");
@@ -342,8 +370,7 @@ static void generateExpressionCode(TreeNode* node) {
 			if (strcmp(node->attr.name, "input") == 0) {
 				emitRO("IN", ACCUMULATOR, 0, 0, "read input");
 			} else if (strcmp(node->attr.name, "output") == 0) {
-				if (node->child[0])
-					cGen(node->child[0]);
+				if (node->child[0]) cGen(node->child[0]);
 				emitRO("OUT", ACCUMULATOR, 0, 0, "print value");
 			} else {
 				const int auxiliar = tmpOffset;
@@ -351,14 +378,15 @@ static void generateExpressionCode(TreeNode* node) {
 				tmpOffset -= 2;
 
 				areParametersFromFunctionCall = TRUE;
-				TreeNode* paramPointer = node->child[0];
+				TreeNode* paramPointer        = node->child[0];
 				while (paramPointer) {
 					cGen(paramPointer);
-					emitRM("ST", ACCUMULATOR, tmpOffset--, FRAME_POINTER, "Store value of func argument");
+					emitRM("ST", ACCUMULATOR, tmpOffset--, FRAME_POINTER,
+					       "Store value of func argument");
 					paramPointer = paramPointer->sibling;
 				}
 				areParametersFromFunctionCall = FALSE;
-				tmpOffset = auxiliar;
+				tmpOffset                     = auxiliar;
 
 				emitRM("LDA", FRAME_POINTER, tmpOffset, FRAME_POINTER, "change fp");
 				int savedLocation = emitSkip(0);
@@ -378,12 +406,15 @@ static void generateExpressionCode(TreeNode* node) {
 					cGen(node->child[1]);
 				}
 
-				symbol = symbolTableLookupFromScope(node->child[0]->attr.name, node->child[0]->scope);
+				symbol =
+				    symbolTableLookupFromScope(node->child[0]->attr.name, node->child[0]->scope);
 				if (strcmp(symbol->scope, "global") == 0) {
 					emitRM("LDC", GLOBAL_POINTER, 0, 0, "load 0");
-					emitRM("LD", ACCUMULATOR_1, symbol->memoryLocation, GLOBAL_POINTER, "get the address of the vector");
+					emitRM("LD", ACCUMULATOR_1, symbol->memoryLocation, GLOBAL_POINTER,
+					       "get the address of the vector");
 				} else {
-					emitRM("LD", ACCUMULATOR_1, symbol->memoryLocation - MAX_MEMORY, FRAME_POINTER, "get the address of the vector");
+					emitRM("LD", ACCUMULATOR_1, symbol->memoryLocation - MAX_MEMORY, FRAME_POINTER,
+					       "get the address of the vector");
 				}
 
 				// Array indexing
@@ -392,7 +423,8 @@ static void generateExpressionCode(TreeNode* node) {
 					emitRM("LDC", INDEX_POINTER, tmp->attr.val, 0, "load array index");
 				} else {
 					symbol = symbolTableLookupFromScope(tmp->attr.name, tmp->scope);
-					emitRM("LD", INDEX_POINTER, symbol->memoryLocation - MAX_MEMORY, FRAME_POINTER, "load array index");
+					emitRM("LD", INDEX_POINTER, symbol->memoryLocation - MAX_MEMORY, FRAME_POINTER,
+					       "load array index");
 				}
 
 				emitRM("LDC", ACCUMULATOR_2, 1, 0, "load 1");
@@ -407,11 +439,11 @@ static void generateExpressionCode(TreeNode* node) {
 
 			emitComment("-> assign");
 
-			if (node->child[1])
-				cGen(node->child[1]);
+			if (node->child[1]) cGen(node->child[1]);
 
 			symbol = symbolTableLookupFromScope(node->child[0]->attr.name, node->child[0]->scope);
-			emitRM("ST", ACCUMULATOR, symbol->memoryLocation - MAX_MEMORY, FRAME_POINTER, "store value");
+			emitRM("ST", ACCUMULATOR, symbol->memoryLocation - MAX_MEMORY, FRAME_POINTER,
+			       "store value");
 
 			emitComment("<- assign");
 			break;
@@ -425,8 +457,7 @@ static void generateExpressionCode(TreeNode* node) {
 		case UnaryK: {
 			emitComment("-> Unary");
 
-			if (node->child[0])
-				cGen(node->child[0]);
+			if (node->child[0]) cGen(node->child[0]);
 
 			if (node->attr.op == MINUS) {
 				emitRM("LDC", ACCUMULATOR_1, 0, 0, "load constant 0");
@@ -453,8 +484,7 @@ static void cGen(TreeNode* tree) {
 			default:
 				break;
 		}
-		if (!areParametersFromFunctionCall)
-			cGen(tree->sibling);
+		if (!areParametersFromFunctionCall) cGen(tree->sibling);
 	}
 }
 

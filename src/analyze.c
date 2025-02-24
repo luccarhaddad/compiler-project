@@ -381,11 +381,6 @@ static void checkNode(TreeNode* node) {
 	}
 }
 
-/**
- * @brief Performs type checking on the syntax tree.
- *
- * @param syntaxTree The root of the syntax tree.
- */
 void typeCheck(TreeNode* syntaxTree) {
 	if (!declaredMainFunction) {
 		pce("Semantic error: undefined reference to 'main'\n");
@@ -394,11 +389,6 @@ void typeCheck(TreeNode* syntaxTree) {
 	traverse(syntaxTree, nullProc, checkNode);
 }
 
-/**
- * @brief Builds the symbol table by traversing the syntax tree.
- *
- * @param syntaxTree The root of the syntax tree.
- */
 void buildSymbolTable(TreeNode* syntaxTree) {
 	enterScope("global");
 	symbolTableInsert("input", -1, location++, Integer, FuncK, FALSE, "global");

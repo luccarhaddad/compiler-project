@@ -1,12 +1,6 @@
 #include "util.h"
 #include "globals.h"
 
-/**
- * @brief Prints a token and its corresponding string.
- *
- * @param token The token type.
- * @param tokenString The string representation of the token.
- */
 void printToken(const TokenType token, const char* tokenString) {
 	switch (token) {
 		case IF:
@@ -91,12 +85,6 @@ void printToken(const TokenType token, const char* tokenString) {
 	}
 }
 
-/**
- * @brief Creates a new statement node.
- *
- * @param kind The kind of statement.
- * @return A pointer to the new statement node.
- */
 TreeNode* newStmtNode(const StmtKind kind) {
 	TreeNode* t = malloc(sizeof(TreeNode));
 	if (t == NULL)
@@ -111,12 +99,6 @@ TreeNode* newStmtNode(const StmtKind kind) {
 	return t;
 }
 
-/**
- * @brief Creates a new expression node.
- *
- * @param kind The kind of expression.
- * @return A pointer to the new expression node.
- */
 TreeNode* newExpNode(const ExpKind kind) {
 	TreeNode* t = malloc(sizeof(TreeNode));
 	if (t == NULL)
@@ -132,12 +114,6 @@ TreeNode* newExpNode(const ExpKind kind) {
 	return t;
 }
 
-/**
- * @brief Copies a string.
- *
- * @param s The string to copy.
- * @return A pointer to the copied string.
- */
 char* copyString(const char* s) {
 	if (s == NULL) return NULL;
 	const int n = strlen(s) + 1;
@@ -161,9 +137,6 @@ static void printSpaces(void) {
 	for (int i = 0; i < indentno; i++) pc(" ");
 }
 
-/**
- * @brief Prints a line from the redundant source file.
- */
 void printLine() {
 	static int currentLine = 0;
 	static int firstCall   = 1;
@@ -206,11 +179,6 @@ const char* ExpTypeToString(const ExpType type) {
 	}
 }
 
-/**
- * @brief Prints the syntax tree.
- *
- * @param tree The syntax tree to print.
- */
 void printTree(const TreeNode* tree) {
 	while (tree != NULL) {
 		// Check if the node is a CompoundK. If so, don't print anything for it.
