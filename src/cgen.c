@@ -9,7 +9,7 @@ static int tmpOffset = -2;
 static int numberOfCompoundScopes = 0;
 static char* currentScopeName = "global";
 static bool areParametersFromFunctionCall = FALSE;
-static bool isFirstDeclaredFunction = FALSE;
+static bool isFirstDeclaredFunction = TRUE;
 static int mainFunctionMemoryLocation = 3;
 
 static void cGen(TreeNode* tree);
@@ -18,6 +18,7 @@ static void generateStatementCode(TreeNode* node) {
 	int savedLocation1, savedLocation2, savedLocation3;
 
 	switch (node->kind.stmt) {
+		// Alterado
 		case FuncK: {
 			char comment[50];
 			sprintf(comment, "-> Init Function (%s)", node->attr.name);
@@ -43,6 +44,8 @@ static void generateStatementCode(TreeNode* node) {
 					emitRM_Abs("LDA", PROGRAM_COUNTER, savedLocation1 + 1, "jump to main");
 				else
 					emitRM_Abs("LDA", PROGRAM_COUNTER, savedLocation1, "jump to main");
+
+				emitRestore();
 
 				if (node->child[0])
 					cGen(node->child[0]);
@@ -71,6 +74,7 @@ static void generateStatementCode(TreeNode* node) {
 			emitComment("<- End Function");
 			break;
 		}
+		// OK
 		case ParamK: {
 			if (node->isArray) {
 				emitComment("-> Param vector");
@@ -78,19 +82,19 @@ static void generateStatementCode(TreeNode* node) {
 				emitComment("<- Param vector");
 				break;
 			}
-
 			emitComment("-> Param");
 			tmpOffset--;
 			emitComment("<- Param");
 			break;
 		}
+		// OK
 		case VarK: {
 			if (node->isArray) {
 				emitComment("-> declare vector");
 				if (strcmp(node->scope->name, "global") == 0) {
 					BucketList symbol = symbolTableLookupFromScope(node->attr.name, node->scope);
 					const int memoryLocation = symbol->memoryLocation;
-					emitRM("LDC", ACCUMULATOR, memoryLocation, 0, "load global position");
+					emitRM("LDC", ACCUMULATOR, memoryLocation, 0, "load global position to ac");
 					emitRM("LDC", GLOBAL_POINTER, 0, 0, "load 0");
 					emitRM("ST", ACCUMULATOR, memoryLocation, GLOBAL_POINTER, "store global position");
 					emitComment("<- declare vector");
@@ -102,12 +106,12 @@ static void generateStatementCode(TreeNode* node) {
 				emitComment("<- declare vector");
 				break;
 			}
-
 			emitComment("-> declare var");
 			tmpOffset--;
 			emitComment("<- declare var");
 			break;
 		}
+		// OK
 		case ReturnK: {
 			emitComment("-> return");
 
@@ -122,6 +126,7 @@ static void generateStatementCode(TreeNode* node) {
 			emitComment("<- return");
 			break;
 		}
+		// OK
 		case CompoundK: {
 			sprintf(currentScopeName, "compound%d", numberOfCompoundScopes);
 
@@ -136,6 +141,7 @@ static void generateStatementCode(TreeNode* node) {
 			}
 			break;
 		}
+		// OK
 		case IfK: {
 			emitComment("-> if");
 
@@ -169,6 +175,7 @@ static void generateStatementCode(TreeNode* node) {
 			emitComment("<- if");
 			break;
 		}
+		// Alterado
 		case WhileK: {
 			emitComment("-> while");
 			emitComment("repeat: jump after body comes back here");
@@ -180,7 +187,7 @@ static void generateStatementCode(TreeNode* node) {
 			}
 
 			// Body
-			savedLocation2 = emitSkip(0);
+			savedLocation2 = emitSkip(1);
 			if (node->child[1]) {
 				cGen(node->child[1]);
 			}
@@ -291,35 +298,39 @@ static void generateExpressionCode(TreeNode* node) {
 			emitComment("<- Op");
 			break;
 		}
-		// OK
+		// Alterado
 		case IdK: {
 			emitComment("-> Id");
 
 			symbol = symbolTableLookupFromScope(node->attr.name, node->scope);
 			if (node->isArray) {
+				emitComment("-> Vector");
 				// Global array
 				if (strcmp(symbol->scope, "global") == 0) {
 					emitRM("LDC", GLOBAL_POINTER, 0, 0, "load 0");
-					emitRM("LD", ACCUMULATOR, symbol->memoryLocation, GLOBAL_POINTER, "load id address");
+					emitRM("LD", ACCUMULATOR, symbol->memoryLocation, GLOBAL_POINTER, "get the address of the vector");
 				} else { // Local array
-					emitRM("LD", ACCUMULATOR, symbol->memoryLocation - MAX_MEMORY, FRAME_POINTER, "load id address");
+					emitRM("LD", ACCUMULATOR, symbol->memoryLocation - MAX_MEMORY, FRAME_POINTER, "get the address of the vector");
 				}
 
 				// Array indexing
 				int arrayIndex;
 				if (node->child[0]->nodekind == ExpK && node->child[0]->kind.exp == ConstK) {
 					arrayIndex = node->child[0]->attr.val;
-					emitRM("LDC", INDEX_POINTER, arrayIndex, 0, "load array index");
+					emitRM("LDC", INDEX_POINTER, arrayIndex, 0, "get the value of the index");
 				} else {
 					symbol = symbolTableLookupFromScope(node->child[0]->attr.name, node->child[0]->scope);
 					arrayIndex = symbol->memoryLocation - MAX_MEMORY;
-					emitRM("LD", INDEX_POINTER, arrayIndex, FRAME_POINTER, "load array index");
+					emitRM("LD", INDEX_POINTER, arrayIndex, FRAME_POINTER, "get the value of the index");
 				}
 
-				emitRM("LDC", ACCUMULATOR, 1, 0, "load 1");
-				emitRO("ADD", INDEX_POINTER, INDEX_POINTER, ACCUMULATOR, "array index - 1");
-				emitRO("SUB", ACCUMULATOR, ACCUMULATOR, INDEX_POINTER, "get address");
-				emitRM("LD", ACCUMULATOR, 0, ACCUMULATOR, "load value");
+				emitRM("LDC", ACCUMULATOR_2, 1, 0, "load 1");
+				emitRO("ADD", INDEX_POINTER, INDEX_POINTER, ACCUMULATOR_2, "sub 3 by 1");
+				emitRO("SUB", ACCUMULATOR, ACCUMULATOR, INDEX_POINTER, "get the address");
+				emitRM("LD", ACCUMULATOR, 0, ACCUMULATOR, "get the value of the vector");
+
+				emitComment("<- Vector");
+				break;
 			}
 
 			if (strcmp(symbol->scope, "global") == 0) {
@@ -343,25 +354,26 @@ static void generateExpressionCode(TreeNode* node) {
 			} else if (strcmp(node->attr.name, "output") == 0) {
 				if (node->child[0])
 					cGen(node->child[0]);
-				emitRO("OUT", ACCUMULATOR, 0, 0, "write output");
+				emitRO("OUT", ACCUMULATOR, 0, 0, "print value");
 			} else {
 				const int auxiliar = tmpOffset;
-				emitRM("ST", FRAME_POINTER, tmpOffset, FRAME_POINTER, "store frame pointer");
+				emitRM("ST", FRAME_POINTER, tmpOffset, FRAME_POINTER, "guard fp");
 				tmpOffset -= 2;
 
 				areParametersFromFunctionCall = TRUE;
 				TreeNode* paramPointer = node->child[0];
 				while (paramPointer) {
 					cGen(paramPointer);
-					emitRM("ST", ACCUMULATOR, tmpOffset--, FRAME_POINTER, "store argument value");
+					emitRM("ST", ACCUMULATOR, tmpOffset--, FRAME_POINTER, "Store value of func argument");
 					paramPointer = paramPointer->sibling;
 				}
 				areParametersFromFunctionCall = FALSE;
 				tmpOffset = auxiliar;
 
-				emitRM("LDA", FRAME_POINTER, tmpOffset, FRAME_POINTER, "load frame pointer");
-				emitRM("LDC", ACCUMULATOR, emitSkip(0) + 2, 0, "load return address");
-				emitRM("LDA", PROGRAM_COUNTER, lookup(node->attr.name), 0, "jump to function");
+				emitRM("LDA", FRAME_POINTER, tmpOffset, FRAME_POINTER, "change fp");
+				int savedLocation = emitSkip(0);
+				emitRM("LDC", ACCUMULATOR, savedLocation + 2, 0, "load return address");
+				emitRM_Abs("LDA", PROGRAM_COUNTER, lookup(node->attr.name), "jump to function");
 
 				emitComment("<- Function Call");
 			}
@@ -370,7 +382,8 @@ static void generateExpressionCode(TreeNode* node) {
 		// OK
 		case AssignK: {
 			if (node->child[0]->isArray) {
-				emitComment("-> assign array");
+				emitComment("-> assign vector");
+				emitComment("-> vector");
 
 				if (node->child[1]) {
 					cGen(node->child[1]);
@@ -379,9 +392,9 @@ static void generateExpressionCode(TreeNode* node) {
 				symbol = symbolTableLookupFromScope(node->child[0]->attr.name, node->child[0]->scope);
 				if (strcmp(symbol->scope, "global") == 0) {
 					emitRM("LDC", GLOBAL_POINTER, 0, 0, "load 0");
-					emitRM("LD", ACCUMULATOR_1, symbol->memoryLocation, GLOBAL_POINTER, "load id address");
+					emitRM("LD", ACCUMULATOR_1, symbol->memoryLocation, GLOBAL_POINTER, "get the address of the vector");
 				} else {
-					emitRM("LD", ACCUMULATOR_1, symbol->memoryLocation - MAX_MEMORY, FRAME_POINTER, "load id address");
+					emitRM("LD", ACCUMULATOR_1, symbol->memoryLocation - MAX_MEMORY, FRAME_POINTER, "get the address of the vector");
 				}
 
 				// Array indexing
@@ -394,11 +407,12 @@ static void generateExpressionCode(TreeNode* node) {
 				}
 
 				emitRM("LDC", ACCUMULATOR_2, 1, 0, "load 1");
-				emitRO("ADD", INDEX_POINTER, INDEX_POINTER, ACCUMULATOR_2, "array index - 1");
-				emitRO("SUB", ACCUMULATOR_1, ACCUMULATOR_1, INDEX_POINTER, "get address");
-				emitRM("ST", ACCUMULATOR, 0, ACCUMULATOR_1, "store value");
+				emitRO("ADD", INDEX_POINTER, INDEX_POINTER, ACCUMULATOR_2, "sub 3 by 1");
+				emitRO("SUB", ACCUMULATOR_1, ACCUMULATOR_1, INDEX_POINTER, "get the address");
+				emitRM("ST", ACCUMULATOR, 0, ACCUMULATOR_1, "get the value of the vector");
 
-				emitComment("<- assign array");
+				emitComment("<- vector");
+				emitComment("<- assign vector");
 				break;
 			}
 
@@ -437,7 +451,8 @@ static void cGen(TreeNode* tree) {
 			default:
 				break;
 		}
-		cGen(tree->sibling);
+		if (!areParametersFromFunctionCall)
+			cGen(tree->sibling);
 	}
 }
 

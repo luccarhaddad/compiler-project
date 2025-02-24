@@ -11,13 +11,13 @@
 #define GLOBAL_POINTER 5
 
 /* Frame pointer register, points to the current frame */
-#define FRAME_POINTER 4
+#define ACCUMULATOR_2 4
 
 /* Index pointer, used for indexing operations */
 #define INDEX_POINTER 3
 
 /* Third accumulator register */
-#define ACCUMULATOR_2 2
+#define FRAME_POINTER 2
 
 /* Second accumulator register */
 #define ACCUMULATOR_1 1

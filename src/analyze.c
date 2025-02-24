@@ -11,12 +11,12 @@ static int location = 0;
 /**
  * @brief Offset for local memory allocation.
  */
-static int localMemoryOffset = 0;
+static int localMemoryOffset = MAX_MEMORY - 2;
 
 /**
  * @brief Offset for global memory allocation.
  */
-static int globalMemoryOffset = MAX_MEMORY - 2;
+static int globalMemoryOffset = 0;
 
 /**
  * @brief Flag to check if the main function is already declared.
